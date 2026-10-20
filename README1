@@ -35,6 +35,12 @@ Le projet suit une architecture de type Data Lake en couches :
 
 ## ⚙️ Installation et Lancement Local
 
+
+
+
+
+https://thies-weather-datalake-dbtq4xjvgrhpdcusx2cnws.streamlit.app/
+
 1. Cloner le dépôt :
    ```bash
    git clone [https://github.com/ton-nom-utilisateur/thies-weather-datalake.git](https://github.com/ton-nom-utilisateur/thies-weather-datalake.git)
