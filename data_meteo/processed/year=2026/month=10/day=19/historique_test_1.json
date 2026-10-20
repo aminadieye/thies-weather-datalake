@@ -1,0 +1,10 @@
+{
+    "latitude": 14.797891,
+    "longitude": -16.927368,
+    "timestamp_mesure": "2026-10-19T19:00",
+    "temperature_celsius": 28.2,
+    "humidite_pourcentage": 80,
+    "precipitation_mm": 0.0,
+    "vent_kmh": 3.5,
+    "date_traitement": "2026-10-19 19:05:00"
+}

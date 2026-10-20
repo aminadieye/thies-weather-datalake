@@ -124,10 +124,29 @@ budget, envie = recherche["budget"], recherche["envie"]
 
 ### START CODE HERE ###
 
-date_texte = None       # (1) convertis la date de départ en texte, au format "2026-08-12"
-demande = None          # (2) rassemble la demande dans un dictionnaire à 6 clés
-voyage, journal = None, None    # (3) appelle ton agent, qui retourne le voyage et le journal
+#date_texte = None       # (1) convertis la date de départ en texte, au format "2026-08-12"
+#demande = None          # (2) rassemble la demande dans un dictionnaire à 6 clés
+#voyage, journal = None, None    # (3) appelle ton agent, qui retourne le voyage et le journal
 
+### START CODE HERE ###
+
+# 1. La date de départ au format AAAA-MM-JJ
+date_texte = depart.strftime("%Y-%m-%d")
+
+# 2. La demande complète avec ses 6 clés
+demande = {
+    "destination": destination,
+    "date_depart": date_texte,
+    "nuits": nuits,
+    "voyageurs": voyageurs,
+    "budget_max": budget,
+    "envie": envie
+}
+
+# 3. Appel de l'agent (en ajoutant 'agent.')
+voyage, journal = agent.planifier(demande, conn, brochures, encodeur)
+
+### END CODE HERE ###
 ### END CODE HERE ###
 
 if demande is None or journal is None:

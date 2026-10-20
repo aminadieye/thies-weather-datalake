@@ -1,0 +1,41 @@
+# 🌍 Thiès Weather Data Lake & Analytics Platform
+
+> Pipeline de Données de Bout en Bout et Dashboard Interactif pour la Région de Thiès (Sénégal).
+
+## 🚀 À propos du projet
+Ce projet est une solution de **Data Engineering et de Business Intelligence** conçue pour collecter, nettoyer et analyser en temps réel les données météorologiques de la région de Thiès (couvrant les départements de Thiès, Mbour et Tivaouane). 
+
+L'objectif est de simuler un pipeline de données de production capable d'alimenter une interface visuelle interactive de type "bulletin météo télévisé".
+
+---
+
+## 🏗️ Architecture du Projet
+Le projet suit une architecture de type Data Lake en couches :
+1. **Zone Raw (Brute) :** Ingestion automatisée des charges JSON brutes issues de l'API Open-Meteo, structurées par date (`year/month/day`).
+2. **Zone Processed (Traitée) :** Nettoyage, structuration et normalisation des données (température, humidité, vent, température ressentie).
+3. **Serving Layer (Dashboard) :** Restitution interactive via une application **Streamlit** et une cartographie dynamique **Folium**.
+
+---
+
+## 🛠️ Stack Technique
+* **Langage :** Python 3.13
+* **Ingestion & Requêtage :** `requests`, `pandas`
+* **Interface & Visualisation :** `Streamlit`, `Folium`, `streamlit-folium`
+* **Source de Données :** Open-Meteo API (Météo & Géocodage)
+
+---
+
+## ✨ Fonctionnalités Clés
+* **Recherche Géographique Intelligente :** Barre de recherche dynamique avec validation géographique stricte pour explorer les localités de la région de Thiès.
+* **Carte Thermique Style TV :** Marqueurs géographiques colorés dynamiquement selon la température en temps réel.
+* **Indicateurs Avancés :** Suivi de la température mesurée, de la **température ressentie**, de l'humidité et de la vitesse du vent.
+* **Analyse Temporelle :** Graphiques d'évolution horaire des températures pour chaque localité sélectionnée.
+
+---
+
+## ⚙️ Installation et Lancement Local
+
+1. Cloner le dépôt :
+   ```bash
+   git clone [https://github.com/ton-nom-utilisateur/thies-weather-datalake.git](https://github.com/ton-nom-utilisateur/thies-weather-datalake.git)
+   cd thies-weather-datalake
