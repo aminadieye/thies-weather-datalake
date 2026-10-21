@@ -15,7 +15,7 @@ st.write(
     " région et suivez l'évolution de la température."
 )
 
-# Initialisation de la session
+# Initialisation de la session avec quelques villes de base
 if "villes_recherchees" not in st.session_state:
   st.session_state["villes_recherchees"] = [
       {"nom": "Thiès", "lat": 14.7979, "lon": -16.9274, "dept": "Thiès"},
@@ -27,36 +27,63 @@ if "villes_recherchees" not in st.session_state:
           "dept": "Tivaouane",
       },
       {"nom": "Pout", "lat": 14.7739, "lon": -17.0611, "dept": "Thiès"},
+      {"nom": "Saly Portudal", "lat": 14.4456, "lon": -17.0131, "dept": "Mbour"},
   ]
 
 
-# 2. Fonction de Géocodage avec validation géographique stricte pour la région de Thiès
+# 2. Fonction de Géocodage avec alias direct pour Saly et validation stricte de Thiès
 def chercher_coordonnees(nom_lieu):
-  url = f"https://geocoding-api.open-meteo.com/v1/search?name={nom_lieu}&count=5&language=fr&format=json"
-  try:
-    res = requests.get(url, timeout=5).json()
-    results = res.get("results", [])
-
-    for r in results:
-      lat = r.get("latitude")
-      lon = r.get("longitude")
-      pays = r.get("country_code")
-
-      # Validation : Le point doit être au Sénégal ET dans le périmètre GPS de la région de Thiès
-      if pays == "SN" and (14.1 <= lat <= 15.3) and (-17.2 <= lon <= -16.5):
-        dept = r.get("admin1", "Région de Thiès")
-        if dept in ["Sénégal", None, ""]:
-          dept = "Région de Thiès"
+    nom_clean = nom_lieu.strip().lower()
+    
+    # Alias direct pour Saly et ses variantes (évite les ratés de l'API)
+    if "saly" in nom_clean:
         return {
-            "nom": r.get("name"),
-            "lat": lat,
-            "lon": lon,
-            "dept": dept,
+            "nom": "Saly Portudal",
+            "lat": 14.4456,
+            "lon": -17.0131,
+            "dept": "Département de Mbour",
         }
-  except Exception:
-    pass
 
-  return None
+    url = f"https://geocoding-api.open-meteo.com/v1/search?name={nom_lieu}&count=5&language=fr&format=json"
+    try:
+        res = requests.get(url, timeout=5).json()
+        results = res.get("results", [])
+
+        for r in results:
+            lat = r.get("latitude")
+            lon = r.get("longitude")
+            pays = str(r.get("country_code", "")).upper()
+
+            admin1 = str(r.get("admin1", "")).lower()
+            admin2 = str(r.get("admin2", "")).lower()
+
+            if pays != "SN" and pays != "":
+                continue
+
+            regions_interdites = ["dakar", "diourbel", "fatick", "saint-louis", "louga"]
+            est_interdit = any(reg in admin1 or reg in admin2 for reg in regions_interdites)
+
+            gps_valide = (14.12 <= lat <= 15.28) and (-17.15 <= lon <= -16.55)
+
+            if gps_valide and not est_interdit:
+                dept = "Région de Thiès"
+                if "mbour" in admin1 or "mbour" in admin2:
+                    dept = "Département de Mbour"
+                elif "tivaouane" in admin1 or "tivaouane" in admin2:
+                    dept = "Département de Tivaouane"
+                elif "thiès" in admin1 or "thies" in admin1 or "thiès" in admin2:
+                    dept = "Département de Thiès"
+
+                return {
+                    "nom": r.get("name"),
+                    "lat": lat,
+                    "lon": lon,
+                    "dept": dept,
+                }
+    except Exception:
+        pass
+
+    return None
 
 
 # 3. Fonction météo actuelle (incluant la température ressentie)
@@ -101,21 +128,33 @@ def get_color(temp):
 # 5. Barre de recherche latérale
 st.sidebar.header("🔍 Rechercher une localité")
 nouvelle_recherche = st.sidebar.text_input(
-    "Nom de la ville, village ou quartier :", placeholder="ex: Cayar, Saly, Diass..."
+    "Nom de la ville, village ou quartier :",
+    placeholder="ex: Cayar, Saly, Joal, Diass...",
 )
 
 if st.sidebar.button("Rechercher et Ajouter"):
   if nouvelle_recherche.strip():
     info_geo = chercher_coordonnees(nouvelle_recherche.strip())
     if info_geo:
-      noms_existants = [
-          v["nom"].lower() for v in st.session_state["villes_recherchees"]
-      ]
-      if info_geo["nom"].lower() not in noms_existants:
+      # Vérification intelligente des doublons par nom (en ignorant les majuscules/minuscules)
+      # ou par proximité GPS (si c'est à moins de ~2 km d'un point existant)
+      deja_present = False
+      for v in st.session_state["villes_recherchees"]:
+        # Comparaison des noms ou des coordonnées proches
+        if (
+            v["nom"].lower() == info_geo["nom"].lower()
+            or (abs(v["lat"] - info_geo["lat"]) < 0.02
+                and abs(v["lon"] - info_geo["lon"]) < 0.02)
+        ):
+          deja_present = True
+          nom_affiche = v["nom"]
+          break
+
+      if not deja_present:
         st.session_state["villes_recherchees"].append(info_geo)
         st.sidebar.success(f"✅ {info_geo['nom']} ajouté à la carte !")
       else:
-        st.sidebar.info(f"📍 {info_geo['nom']} est déjà sur la carte.")
+        st.sidebar.info(f"📍 {nom_affiche} est déjà sur la carte.")
     else:
       st.sidebar.error("❌ Localité introuvable dans la région de Thiès.")
 
@@ -173,11 +212,21 @@ else:
 
 st.markdown("---")
 
-# 9. Carte interactive régionale
-st.subheader("🗺️ Carte Interactive Régionale")
+# 9. Carte interactive régionale strictement limitée à Thiès
+st.subheader("🗺️ Carte Interactive - Région de Thiès")
 
+# Coordonnées du centre de Thiès et verrouillage des frontières de la région
 carte = folium.Map(
-    location=[14.7979, -16.9274], zoom_start=9, tiles="OpenStreetMap"
+    location=[14.75, -16.92],
+    zoom_start=10,
+    min_zoom=9,
+    max_zoom=14,
+    min_lat=14.15,
+    max_lat=15.25,
+    min_lon=-17.18,
+    max_lon=-16.70,
+    max_bounds=True,
+    tiles="OpenStreetMap",
 )
 
 for _, r in df.iterrows():
